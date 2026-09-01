@@ -8,7 +8,7 @@ import streamlit as st
 # ==========================================
 # 0. STREAMLIT CONFIGURATION & STYLING
 # ==========================================
-st.set_page_config(page_title="NexusFi // Autonomous Multi-Agent Intelligence", layout="wide")
+st.set_page_config(page_title="NexusFi // Multi-Agent Intelligence", layout="wide")
 
 st.markdown("""
 <style>
@@ -33,7 +33,7 @@ TICKER_UNIVERSE = sorted([
 ])
 
 # ==========================================
-# 1. DATA CONTRACTS & AUTOMATED PROFILING
+# 1. DATA CONTRACTS & USER PROFILING
 # ==========================================
 @dataclass
 class QuantitativeSignal:
@@ -53,26 +53,37 @@ class BehavioralSentiment:
     summary: str
 
 @dataclass
-class DynamicInferredProfile:
-    risk_category: str
-    inferred_reason: str
+class UserProfileModel:
+    mode: str
+    risk_tolerance: str
+    cash_buffer_pct: float
+    inference_note: str
 
-def auto_infer_risk_profile(cash_pct: float, bias: str) -> DynamicInferredProfile:
-    """Automatically determines user investor classification based on financial position trends[cite: 1]."""
-    if cash_pct >= 30 or bias == "Loss Averse":
-        return DynamicInferredProfile(
-            risk_category="Low Risk (Capital Shield)",
-            inferred_reason=f"Inferred via high liquidity buffer ({cash_pct}%) and defensive behavioral bias ('{bias}')."
-        )
-    elif cash_pct <= 15 and bias == "Momentum Chaser":
-        return DynamicInferredProfile(
-            risk_category="High Risk (Alpha Seeker)",
-            inferred_reason=f"Inferred via aggressive capital deployment ({cash_pct}% cash buffer) and momentum trend bias."
-        )
+def resolve_user_profile(mode: str, manual_risk: str, manual_cash: float) -> UserProfileModel:
+    if mode == "Automatic (Analyze Past Behavior Trends)":
+        # Simulate past interaction trends from user site history logs
+        simulated_queries = 18
+        simulated_avg_cash = 14.5
+        if simulated_avg_cash < 20:
+            return UserProfileModel(
+                mode="Automatic",
+                risk_tolerance="High Risk (Alpha Seeker)",
+                cash_buffer_pct=simulated_avg_cash,
+                inference_note=f"Auto-detected from past session logs: {simulated_queries} high-beta queries, low historical cash buffer ({simulated_avg_cash}%)."
+            )
+        else:
+            return UserProfileModel(
+                mode="Automatic",
+                risk_tolerance="Low Risk (Capital Shield)",
+                cash_buffer_pct=35.0,
+                inference_note="Auto-detected from past session logs: Conservative asset holding and high liquidity retention."
+            )
     else:
-        return DynamicInferredProfile(
-            risk_category="Medium Risk (Balanced Growth)",
-            inferred_reason=f"Inferred via moderate cash allocation ({cash_pct}%) and blended asset bias ('{bias}')."
+        return UserProfileModel(
+            mode="Manual",
+            risk_tolerance=manual_risk,
+            cash_buffer_pct=manual_cash,
+            inference_note=f"Manually configured parameters: Risk Profile [{manual_risk}], Cash Buffer [{manual_cash}%]."
         )
 
 # ==========================================
@@ -83,7 +94,7 @@ class QuantitativeEngine:
         await asyncio.sleep(0.3)
         score = random.uniform(-1, 1)
         cls = "BULLISH MOMENTUM" if score > 0.2 else "BEARISH PRESSURE" if score < -0.2 else "NEUTRAL CONSOLIDATION"
-        return QuantitativeSignal(classification=cls, confidence=round(abs(score), 2), summary=f"Evaluated price momentum, volume anomaly, and volatility dimensions[cite: 1]. Score: {score:.2f}.")
+        return QuantitativeSignal(classification=cls, confidence=round(abs(score), 2), summary=f"Evaluated price momentum, volume anomaly, and volatility dimensions. Score: {score:.2f}.")
 
 class RegulatoryRAGVault:
     async def evaluate(self, asset: str, fail_rag: bool) -> RegulatoryRAGSource:
@@ -91,7 +102,7 @@ class RegulatoryRAGVault:
         if fail_rag: raise LookupError("Vector database timeout.")
         return RegulatoryRAGSource(
             insight=f"Latest corporate filings and earnings disclosures for {asset} indicate stable debt-to-equity ratios with localized margin optimizations.",
-            citation_title=f"SEBI Quarterly Financial Disclosure & Earnings Transcript — {asset}[cite: 1]",
+            citation_title=f"SEBI Quarterly Financial Disclosure & Earnings Transcript — {asset}",
             official_link=f"https://www.screener.in/company/{asset}/consolidated/"
         )
 
@@ -100,28 +111,23 @@ class BehavioralSentimentEngine:
         await asyncio.sleep(0.2)
         if fail_alt: raise ConnectionError("Alternative feed offline.")
         tone = random.choice(["EUPHORIC RETAIL HYPE", "DEFENSIVE RETAIL CAUTION", "APATHETIC ACCUMULATION"])
-        return BehavioralSentiment(sentiment=tone, summary=f"Analyzed social sentiment feeds and FII/DII institutional flows: {tone}[cite: 1].")
+        return BehavioralSentiment(sentiment=tone, summary=f"Analyzed social sentiment feeds and FII/DII institutional flows: {tone}.")
 
 # ==========================================
 # 3. SYNTHESIS LAYER
 # ==========================================
 class DecisionSynthesizer:
-    def synthesize(self, quant: QuantitativeSignal, rag: RegulatoryRAGSource, alt: BehavioralSentiment, profile: DynamicInferredProfile) -> Dict[str, Any]:
-        if "Low Risk" in profile.risk_category:
+    def synthesize(self, quant: QuantitativeSignal, rag: RegulatoryRAGSource, alt: BehavioralSentiment, profile: UserProfileModel) -> Dict[str, Any]:
+        if "Low Risk" in profile.risk_tolerance:
             action = "DEFENSIVE REDUCE / HOLD CASH" if "BEARISH" in quant.classification else "CAUTIOUS HOLD"
-            r1 = f"• Automated Profile Match: {profile.risk_category}."
+            r1 = f"• Profile Constraint: {profile.risk_tolerance} (Cash Buffer: {profile.cash_buffer_pct}%)."
             r2 = f"• Quantitative Driver: {quant.summary}"
-            r3 = f"• Strategic Directive: Prioritize capital safety and risk mitigation."
-        elif "High Risk" in profile.risk_category:
-            action = "AGGRESSIVE ACCUMULATION" if "BULLISH" in quant.classification else "TACTICAL DIP BUY"
-            r1 = f"• Automated Profile Match: {profile.risk_category}."
-            r2 = f"• Quantitative Driver: {quant.summary}"
-            r3 = f"• Strategic Directive: Authorize high-beta tactical upside positioning."
+            r3 = f"• Strategic Directive: Prioritize capital preservation and portfolio safety."
         else:
-            action = "BALANCED REBALANCING"
-            r1 = f"• Automated Profile Match: {profile.risk_category}."
-            r2 = f"• Regulatory Grounding: {rag.insight}"
-            r3 = f"• Strategic Directive: Maintain scaled allocation without over-concentration."
+            action = "AGGRESSIVE ACCUMULATION" if "BULLISH" in quant.classification else "TACTICAL DIP BUY"
+            r1 = f"• Profile Constraint: {profile.risk_tolerance} (Cash Buffer: {profile.cash_buffer_pct}%)."
+            r2 = f"• Quantitative Driver: {quant.summary}"
+            r3 = f"• Strategic Directive: Authorize high-beta tactical upside allocation."
 
         return {
             "Action": action,
@@ -133,7 +139,7 @@ class DecisionSynthesizer:
             "RAG_Text": rag.insight
         }
 
-async def run_pipeline(asset: str, profile: DynamicInferredProfile, fail_rag: bool, fail_alt: bool):
+async def run_pipeline(asset: str, profile: UserProfileModel, fail_rag: bool, fail_alt: bool):
     t0 = time.time()
     res = await asyncio.gather(
         QuantitativeEngine().evaluate(asset),
@@ -142,8 +148,8 @@ async def run_pipeline(asset: str, profile: DynamicInferredProfile, fail_rag: bo
         return_exceptions=True
     )
     q, r, a = res
-    if isinstance(r, Exception): r = RegulatoryRAGSource("Regulatory filing retrieval failed. System fallback active[cite: 1].", "Fallback Ledger", "#")
-    if isinstance(a, Exception): a = BehavioralSentiment("NEUTRAL", "Sentiment feed offline[cite: 1].")
+    if isinstance(r, Exception): r = RegulatoryRAGSource("Regulatory filing retrieval failed. System fallback active.", "Fallback Ledger", "#")
+    if isinstance(a, Exception): a = BehavioralSentiment("NEUTRAL", "Sentiment feed offline.")
     
     output = DecisionSynthesizer().synthesize(q, r, a, profile)
     latency = (time.time() - t0) * 1000
@@ -152,50 +158,60 @@ async def run_pipeline(asset: str, profile: DynamicInferredProfile, fail_rag: bo
 # ==========================================
 # 4. STREAMLIT FRONTEND USER INTERFACE
 # ==========================================
-st.title("PROJECT NEXUS // INTELLIGENCE LAYER")
-st.caption("Autonomous Multi-Agent Financial System for Retail Investors[cite: 1]")
+st.markdown('<p class="main-header">PROJECT NEXUS // INTELLIGENCE LAYER</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Autonomous Multi-Agent Financial System for Retail Investors</p>', unsafe_allow_html=True)
 st.markdown("---")
 
-# Dynamic Controls for User Financial Trends
-col_top1, col_top2, col_top3 = st.columns(3)
-with col_top1:
+# Selection controls
+col_sel1, col_sel2 = st.columns(2)
+with col_sel1:
     target_asset = st.selectbox("SELECT BRAND / EQUITY", TICKER_UNIVERSE)
-with col_top2:
-    cash_pct = st.slider("PORTFOLIO CASH BUFFER (%)", 5, 50, 20)
-with col_top3:
-    behavior_bias = st.selectbox("BEHAVIORAL TREND BIAS", ["Momentum Chaser", "Value Investor", "Loss Averse"], index=0)
+with col_sel2:
+    profiling_mode = st.radio("PROFILING CONFIGURATION", ["Automatic (Analyze Past Behavior Trends)", "Choose Manually"], horizontal=True)
 
-# Automated Risk Inference
-inferred_profile = auto_infer_risk_profile(cash_pct, behavior_bias)
+# Conditional Manual vs Automatic inputs
+manual_risk = "High Risk (Alpha Seeker)"
+manual_cash = 20.0
+
+if profiling_mode == "Choose Manually":
+    st.markdown("<div class='guide-tag'>👉 Manual Parameters Override</div>", unsafe_allow_html=True)
+    m_col1, m_col2 = st.columns(2)
+    with m_col1:
+        manual_risk = st.selectbox("RISK PROFILE", ["Low Risk (Capital Shield)", "High Risk (Alpha Seeker)"])
+    with m_col2:
+        manual_cash = st.slider("CASH BUFFER (%)", 5, 50, 20)
+
+# Resolve user profile state
+user_profile = resolve_user_profile(profiling_mode, manual_risk, manual_cash)
 
 st.markdown(f"""
 <div style="background: #1e293b; border-left: 4px solid #38bdf8; padding: 12px 18px; border-radius: 6px; margin: 15px 0;">
-    <b style="color: #38bdf8;">AI Automated Investor Classification:</b> <span style="color: #fff; font-weight: 700;">{inferred_profile.risk_category}</span><br>
-    <span style="font-size: 12px; color: #94a3b8;">{inferred_profile.inferred_reason}</span>
+    <b style="color: #38bdf8;">Active Investor Classification:</b> <span style="color: #fff; font-weight: 700;">{user_profile.risk_tolerance}</span><br>
+    <span style="font-size: 12px; color: #94a3b8;">{user_profile.inference_note}</span>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 execute_btn = st.button("🚀 EXECUTE MULTI-AGENT REASONING PIPELINE", type="primary", use_container_width=True)
 
-with st.expander("🛠️ System Reliability & Graceful Degradation Toggles[cite: 1]"):
+with st.expander("🛠️ System Reliability & Graceful Degradation Toggles"):
     fail_rag = st.checkbox("Simulate Regulatory Vector Database Timeout")
     fail_alt = st.checkbox("Simulate Alternative Data Feed Crash")
 
 if execute_btn:
-    with st.spinner("Dispatching parallel agents (Quant, RAG, Behavioral)...[cite: 1]"):
-        result, latency, conf = asyncio.run(run_pipeline(target_asset, inferred_profile, fail_rag, fail_alt))
+    with st.spinner("Dispatching parallel agents (Quant, RAG, Behavioral)..."):
+        result, latency, conf = asyncio.run(run_pipeline(target_asset, user_profile, fail_rag, fail_alt))
 
     # Telemetry Metrics Row
-    st.markdown("### 📊 Session Performance & Risk Telemetry[cite: 1]")
+    st.markdown("### 📊 Session Performance & Risk Telemetry")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Pipeline Latency", latency)
     m2.metric("Model Confidence", conf)
-    m3.metric("Cash Buffer", f"{cash_pct}%")
-    m4.metric("Active Agents", "3 Parallel[cite: 1]")
+    m3.metric("Cash Buffer", f"{user_profile.cash_buffer_pct}%")
+    m4.metric("Active Agents", "3 Parallel")
 
-    # Core Verdict Card
-    st.markdown("### 🎯 Personalized Investment Intelligence[cite: 1]")
+    # Core Verdict Card (Line by Line)
+    st.markdown("### 🎯 Personalized Investment Intelligence")
     with st.container(border=True):
         st.markdown(f"**Synthesized Advisory for `{target_asset}`**")
         st.markdown(f"## {result['Action']}")
@@ -205,13 +221,13 @@ if execute_btn:
         {result['Line3']}
         """, unsafe_allow_html=True)
 
-    # Verified Source Citations & Live Clickable News Hub (Bug Free Syntax)
-    st.markdown("### 📑 Verified Source Citations & Live Brand News Center[cite: 1]")
+    # Verified Source Citations & Live Clickable News Hub
+    st.markdown("### 📑 Verified Source Citations & Live Brand News Center")
     with st.container(border=True):
-        st.markdown("**Official Regulatory Citation & Document Source:**[cite: 1]")
+        st.markdown("**Official Regulatory Citation & Document Source:**")
         st.markdown(f"📄 [{result['Citation']}]({result['Link']})")
         
-        st.markdown("**Extracted Contextual RAG Insight:**[cite: 1]")
+        st.markdown("**Extracted Contextual RAG Insight:**")
         st.info(f'"{result["RAG_Text"]}"')
         
         st.markdown(f"**Live Clickable News & Financial Feeds for `{target_asset}`:**")
