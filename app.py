@@ -199,11 +199,27 @@ if st.button("🚀 Run Multi-Agent Analysis", use_container_width=True):
         st.info(f"**Personalized Justification ({risk_profile} Risk Profile):**\n\n{synth_out['Justification']}")
 
     # 2. Performance Metrics
-    st.markdown("### 📊 Session Performance Metrics")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Agent Latency", session_metrics["Latency"])
-    m2.metric("30-Day Signal Accuracy", session_metrics["30D Accuracy"])
-    m3.metric("Portfolio Risk Score", session_metrics["Risk Concentration"])
+    st.markdown("### 📊 Session Telemetry")
+    
+    # Custom HTML/CSS HUD Panel
+    st.markdown(f"""
+    <div style="background-color: #f8f9fa; border-left: 6px solid #4F46E5; padding: 20px 30px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px -2px rgba(0,0,0,0.1); margin-bottom: 25px;">
+        <div style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Agent Latency</div>
+            <div style="font-size: 28px; font-weight: 800; color: #111827;">{session_metrics["Latency"]}<span style="font-size: 14px; color: #4F46E5; margin-left: 4px;">ms</span></div>
+        </div>
+        <div style="height: 50px; width: 2px; background-color: #E5E7EB;"></div>
+        <div style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Signal Accuracy</div>
+            <div style="font-size: 28px; font-weight: 800; color: #10B981;">{session_metrics["30D Accuracy"]}</div>
+        </div>
+        <div style="height: 50px; width: 2px; background-color: #E5E7EB;"></div>
+        <div style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Risk Exposure</div>
+            <div style="font-size: 28px; font-weight: 800; color: #EF4444;">{session_metrics["Risk Concentration"]}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # 3. Multi-Agent Reasoning Chains
     st.markdown("### 🧠 Multi-Agent Reasoning Trace")
