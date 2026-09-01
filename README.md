@@ -1,227 +1,241 @@
-# -import asyncio
+import asyncio
 import time
 import random
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Any
+from typing import Dict, Any, Tuple
 import streamlit as st
 
-# Set Streamlit Page Config
-st.set_page_config(page_title="HackVerse | Financial Intelligence System", layout="wide")
+# ==========================================
+# 0. STREAMLIT CONFIGURATION & STYLING
+# ==========================================
+st.set_page_config(page_title="NexusFi // Multi-Agent Intelligence", layout="wide")
+
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+    
+    html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f1117; color: #f8fafc; }
+    .main-header { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; margin-bottom: 5px; }
+    .sub-header { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+    .metric-box { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; text-align: center; }
+    .metric-val { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #38bdf8; }
+    .metric-lbl { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
+    .guide-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f43f5e; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+</style>
+""", unsafe_allow_html=True)
+
+TICKER_UNIVERSE = sorted([
+    "RELIANCE", "TCS", "HDFCBANK", "ICICIBANK", "BHARTIARTL", "INFY", "ITC", 
+    "SBIN", "L&T", "BAJFINANCE", "HINDUNILVR", "MARUTI", "M&M", "ASIANPAINT", 
+    "TITAN", "SUNPHARMA", "TATAMOTORS", "NTPC", "COALINDIA", "ONGC", 
+    "POWERGRID", "ADANIPORTS", "ADANIENT", "KOTAKBANK", "AXISBANK", 
+    "WIPRO", "BAJAJFINSV", "NESTLEIND", "ULTRACEMCO", "TECHM"
+])
 
 # ==========================================
-# 1. STRUCTURED DATA CONTRACTS
+# 1. DATA CONTRACTS & USER PROFILING
 # ==========================================
 @dataclass
-class MarketSignal:
+class QuantitativeSignal:
     classification: str
     confidence: float
-    dimensions_evaluated: Dict[str, float]
-    reasoning: str
+    summary: str
 
 @dataclass
-class RAGOutput:
+class RegulatoryRAGSource:
     insight: str
-    source_attribution: List[str]
+    citation_title: str
+    official_link: str
 
 @dataclass
-class SentimentSignal:
-    classification: str
-    confidence: float
-    reasoning: str
+class BehavioralSentiment:
+    sentiment: str
+    summary: str
 
 @dataclass
-class UserProfile:
-    user_id: str
-    risk_tolerance: str  # "Low", "Medium", "High"
-    portfolio: Dict[str, float]
+class UserProfileModel:
+    mode: str
+    risk_tolerance: str
+    cash_buffer_pct: float
+    inference_note: str
 
-# ==========================================
-# 2. PARALLEL AGENTS
-# ==========================================
-class SignalClassificationAgent:
-    async def analyze(self, ticker: str) -> MarketSignal:
-        await asyncio.sleep(0.1)
-        price_momentum = random.uniform(-1, 1)
-        volume_anomaly = random.uniform(0.5, 3.0)
-        volatility_index = random.uniform(10, 50)
-        
-        is_bullish = price_momentum > 0.1 and volume_anomaly > 1.2
-        classification = "Bullish" if is_bullish else "Bearish" if price_momentum < -0.1 else "Neutral"
-        confidence = round(min(0.98, abs(price_momentum) + (volume_anomaly * 0.1)), 2)
-        
-        return MarketSignal(
-            classification=classification,
-            confidence=confidence,
-            dimensions_evaluated={
-                "Price Momentum": round(price_momentum, 2), 
-                "Volume Anomaly (x)": round(volume_anomaly, 2), 
-                "Volatility": round(volatility_index, 2)
-            },
-            reasoning=f"{classification} momentum ({price_momentum:.2f}) confirmed by {volume_anomaly:.2f}x relative volume."
-        )
-
-class FundamentalRAGAgent:
-    def __init__(self):
-        self.vector_db = {
-            "RELIANCE": {"chunk": "Management highlighted a 14% EBITDA margin expansion driven by retail and telecom.", "doc": "SEBI Q3 Filing, Pg 14"},
-            "HDFCBANK": {"chunk": "NIM contracted by 10 bps; deposit growth remains a primary focus for upcoming quarters.", "doc": "Q2 Earnings Transcript, 18:30"},
-            "TCS": {"chunk": "Operating margins contracted 40bps due to macro headwinds in European markets.", "doc": "SEBI Q3 Disclosure - Sec 2"},
-            "ZOMATO": {"chunk": "Blinkit GOV grew 112% YoY, achieving operating profitability across 70% of dark stores.", "doc": "Corporate Disclosure - April 2024"}
-        }
-
-    async def analyze(self, ticker: str, simulate_missing: bool = False) -> RAGOutput:
-        await asyncio.sleep(0.2)
-        if simulate_missing:
-            raise FileNotFoundError(f"No recent SEBI filings found for {ticker}.")
-        data = self.vector_db.get(ticker, {"chunk": "No structural anomalies detected in recent SEBI/SEC filings.", "doc": "General Database"})
-        return RAGOutput(insight=data["chunk"], source_attribution=[data["doc"]])
-
-class AlternativeDataAgent:
-    async def analyze(self, ticker: str, simulate_failure: bool = False) -> SentimentSignal:
-        await asyncio.sleep(0.15)
-        if simulate_failure:
-            raise ConnectionError("Live News Sentiment API offline.")
-        sentiment_score = random.uniform(-1, 1)
-        return SentimentSignal(
-            classification="Positive" if sentiment_score > 0 else "Negative",
-            confidence=0.82,
-            reasoning=f"Aggregated social & news sentiment score: {sentiment_score:.2f}."
-        )
-
-# ==========================================
-# 3. SYNTHESIS ENGINE
-# ==========================================
-class SynthesisEngine:
-    def synthesize(self, quant: MarketSignal, rag: RAGOutput, alt: Optional[SentimentSignal], user: UserProfile) -> Dict[str, Any]:
-        alt_status = alt.reasoning if alt else "⚠️ SYSTEM DEGRADED: Sentiment feed offline."
-        
-        if user.risk_tolerance == "Low":
-            if quant.classification == "Bearish":
-                action, justification = "SELL / CUT LOSSES", "Capital preservation prioritized for low-risk profile. Downward momentum detected."
-            else:
-                action, justification = "HOLD / CAUTION", "Despite positive signals, conservative parameters dictate waiting for stronger stability."
-        elif user.risk_tolerance == "High":
-            if quant.classification == "Bullish":
-                action, justification = "AGGRESSIVE BUY", "Strong momentum aligns with your aggressive risk tolerance."
-            else:
-                action, justification = "SCALE IN / WATCH", "Technicals are neutral/bearish, but high-risk capacity allows selective entry."
+def resolve_user_profile(mode: str, manual_risk: str, manual_cash: float) -> UserProfileModel:
+    if mode == "Automatic (Analyze Past Behavior Trends)":
+        # Simulate past interaction trends from user site history logs
+        simulated_queries = 18
+        simulated_avg_cash = 14.5
+        if simulated_avg_cash < 20:
+            return UserProfileModel(
+                mode="Automatic",
+                risk_tolerance="High Risk (Alpha Seeker)",
+                cash_buffer_pct=simulated_avg_cash,
+                inference_note=f"Auto-detected from past session logs: {simulated_queries} high-beta queries, low historical cash buffer ({simulated_avg_cash}%)."
+            )
         else:
-            action, justification = "MAINTAIN WEIGHT", "Balanced risk parameters suggest holding current asset allocation."
+            return UserProfileModel(
+                mode="Automatic",
+                risk_tolerance="Low Risk (Capital Shield)",
+                cash_buffer_pct=35.0,
+                inference_note="Auto-detected from past session logs: Conservative asset holding and high liquidity retention."
+            )
+    else:
+        return UserProfileModel(
+            mode="Manual",
+            risk_tolerance=manual_risk,
+            cash_buffer_pct=manual_cash,
+            inference_note=f"Manually configured parameters: Risk Profile [{manual_risk}], Cash Buffer [{manual_cash}%]."
+        )
+
+# ==========================================
+# 2. PARALLEL AI AGENTS
+# ==========================================
+class QuantitativeEngine:
+    async def evaluate(self, asset: str) -> QuantitativeSignal:
+        await asyncio.sleep(0.3)
+        score = random.uniform(-1, 1)
+        cls = "BULLISH MOMENTUM" if score > 0.2 else "BEARISH PRESSURE" if score < -0.2 else "NEUTRAL CONSOLIDATION"
+        return QuantitativeSignal(classification=cls, confidence=round(abs(score), 2), summary=f"Evaluated price momentum, volume anomaly, and volatility dimensions. Score: {score:.2f}.")
+
+class RegulatoryRAGVault:
+    async def evaluate(self, asset: str, fail_rag: bool) -> RegulatoryRAGSource:
+        await asyncio.sleep(0.4)
+        if fail_rag: raise LookupError("Vector database timeout.")
+        return RegulatoryRAGSource(
+            insight=f"Latest corporate filings and earnings disclosures for {asset} indicate stable debt-to-equity ratios with localized margin optimizations.",
+            citation_title=f"SEBI Quarterly Financial Disclosure & Earnings Transcript — {asset}",
+            official_link=f"https://www.screener.in/company/{asset}/consolidated/"
+        )
+
+class BehavioralSentimentEngine:
+    async def evaluate(self, asset: str, fail_alt: bool) -> BehavioralSentiment:
+        await asyncio.sleep(0.2)
+        if fail_alt: raise ConnectionError("Alternative feed offline.")
+        tone = random.choice(["EUPHORIC RETAIL HYPE", "DEFENSIVE RETAIL CAUTION", "APATHETIC ACCUMULATION"])
+        return BehavioralSentiment(sentiment=tone, summary=f"Analyzed social sentiment feeds and FII/DII institutional flows: {tone}.")
+
+# ==========================================
+# 3. SYNTHESIS LAYER
+# ==========================================
+class DecisionSynthesizer:
+    def synthesize(self, quant: QuantitativeSignal, rag: RegulatoryRAGSource, alt: BehavioralSentiment, profile: UserProfileModel) -> Dict[str, Any]:
+        if "Low Risk" in profile.risk_tolerance:
+            action = "DEFENSIVE REDUCE / HOLD CASH" if "BEARISH" in quant.classification else "CAUTIOUS HOLD"
+            r1 = f"• Profile Constraint: {profile.risk_tolerance} (Cash Buffer: {profile.cash_buffer_pct}%)."
+            r2 = f"• Quantitative Driver: {quant.summary}"
+            r3 = f"• Strategic Directive: Prioritize capital preservation and portfolio safety."
+        else:
+            action = "AGGRESSIVE ACCUMULATION" if "BULLISH" in quant.classification else "TACTICAL DIP BUY"
+            r1 = f"• Profile Constraint: {profile.risk_tolerance} (Cash Buffer: {profile.cash_buffer_pct}%)."
+            r2 = f"• Quantitative Driver: {quant.summary}"
+            r3 = f"• Strategic Directive: Authorize high-beta tactical upside allocation."
 
         return {
-            "Recommendation": action,
-            "Justification": justification,
-            "Technical_Base": f"{quant.reasoning} (Confidence: {quant.confidence * 100:.0f}%)",
-            "Fundamental_Base": f"{rag.insight}",
-            "Source": rag.source_attribution[0],
-            "Alternative_Base": alt_status
+            "Action": action,
+            "Line1": r1,
+            "Line2": r2,
+            "Line3": r3,
+            "Citation": rag.citation_title,
+            "Link": rag.official_link,
+            "RAG_Text": rag.insight
         }
 
-# ==========================================
-# 4. ORCHESTRATION PIPELINE
-# ==========================================
-async def run_pipeline(ticker: str, user: UserProfile, degrade_rag: bool, degrade_alt: bool):
-    start = time.time()
-    quant_agent = SignalClassificationAgent()
-    rag_agent = FundamentalRAGAgent()
-    alt_agent = AlternativeDataAgent()
-    synthesizer = SynthesisEngine()
-
-    results = await asyncio.gather(
-        quant_agent.analyze(ticker),
-        rag_agent.analyze(ticker, simulate_missing=degrade_rag),
-        alt_agent.analyze(ticker, simulate_failure=degrade_alt),
+async def run_pipeline(asset: str, profile: UserProfileModel, fail_rag: bool, fail_alt: bool):
+    t0 = time.time()
+    res = await asyncio.gather(
+        QuantitativeEngine().evaluate(asset),
+        RegulatoryRAGVault().evaluate(asset, fail_rag),
+        BehavioralSentimentEngine().evaluate(asset, fail_alt),
         return_exceptions=True
     )
+    q, r, a = res
+    if isinstance(r, Exception): r = RegulatoryRAGSource("Regulatory filing retrieval failed. System fallback active.", "Fallback Ledger", "#")
+    if isinstance(a, Exception): a = BehavioralSentiment("NEUTRAL", "Sentiment feed offline.")
     
-    quant_res, rag_res, alt_res = results
-
-    if isinstance(rag_res, Exception):
-        rag_res = RAGOutput(insight="Filings unavailable. Relying on technical signals.", source_attribution=["System Fallback"])
-    if isinstance(alt_res, Exception):
-        alt_res = None
-
-    final_output = synthesizer.synthesize(quant_res, rag_res, alt_res, user)
-    latency = (time.time() - start) * 1000
-
-    metrics = {
-        "Latency": f"{latency:.1f} ms",
-        "30D Accuracy": f"{random.uniform(65, 92):.1f}%",
-        "Risk Concentration": "8.5 / 10" if user.risk_tolerance == "High" else "3.2 / 10"
-    }
-
-    return quant_res, final_output, metrics
+    output = DecisionSynthesizer().synthesize(q, r, a, profile)
+    latency = (time.time() - t0) * 1000
+    return output, f"{latency:.0f}ms", f"{q.confidence * 100:.0f}%"
 
 # ==========================================
-# 5. STREAMLIT FRONTEND INTERFACE
+# 4. STREAMLIT FRONTEND USER INTERFACE
 # ==========================================
-st.title("🤖 Multi-Agent Autonomous Financial Intelligence System")
-st.caption("Sprint 1 Hackathon Demo — Rapid Vibe Coding")
+st.markdown('<p class="main-header">PROJECT NEXUS // INTELLIGENCE LAYER</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Autonomous Multi-Agent Financial System for Retail Investors</p>', unsafe_allow_html=True)
+st.markdown("---")
 
-# Sidebar Configuration
-st.sidebar.header("👤 User Profile & Controls")
-user_id = st.sidebar.text_input("User ID", "RET_INV_102")
-risk_profile = st.sidebar.selectbox("Risk Profile", ["Low", "Medium", "High"], index=2)
+# Selection controls
+col_sel1, col_sel2 = st.columns(2)
+with col_sel1:
+    target_asset = st.selectbox("SELECT BRAND / EQUITY", TICKER_UNIVERSE)
+with col_sel2:
+    profiling_mode = st.radio("PROFILING CONFIGURATION", ["Automatic (Analyze Past Behavior Trends)", "Choose Manually"], horizontal=True)
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("⚙️ System Degradation Test")
-degrade_rag = st.sidebar.checkbox("Simulate Missing Filing (RAG Fail)")
-degrade_alt = st.sidebar.checkbox("Simulate News API Offline")
+# Conditional Manual vs Automatic inputs
+manual_risk = "High Risk (Alpha Seeker)"
+manual_cash = 20.0
 
-# Portfolio Watchlist
-portfolio = {"RELIANCE": "35%", "HDFCBANK": "25%", "ZOMATO": "20%", "CASH": "20%"}
-st.sidebar.markdown("---")
-st.sidebar.subheader("💼 Current Portfolio State")
-for asset, weight in portfolio.items():
-    st.sidebar.text(f"{asset}: {weight}")
+if profiling_mode == "Choose Manually":
+    st.markdown("<div class='guide-tag'>👉 Manual Parameters Override</div>", unsafe_allow_html=True)
+    m_col1, m_col2 = st.columns(2)
+    with m_col1:
+        manual_risk = st.selectbox("RISK PROFILE", ["Low Risk (Capital Shield)", "High Risk (Alpha Seeker)"])
+    with m_col2:
+        manual_cash = st.slider("CASH BUFFER (%)", 5, 50, 20)
 
-# Main Layout Selection
-col_select, col_btn = st.columns([3, 1])
-with col_select:
-    selected_ticker = st.selectbox("Select Asset to Analyze", ["RELIANCE", "HDFCBANK", "TCS", "ZOMATO"])
+# Resolve user profile state
+user_profile = resolve_user_profile(profiling_mode, manual_risk, manual_cash)
 
-user = UserProfile(user_id=user_id, risk_tolerance=risk_profile, portfolio=portfolio)
+st.markdown(f"""
+<div style="background: #1e293b; border-left: 4px solid #38bdf8; padding: 12px 18px; border-radius: 6px; margin: 15px 0;">
+    <b style="color: #38bdf8;">Active Investor Classification:</b> <span style="color: #fff; font-weight: 700;">{user_profile.risk_tolerance}</span><br>
+    <span style="font-size: 12px; color: #94a3b8;">{user_profile.inference_note}</span>
+</div>
+""", unsafe_allow_html=True)
 
-if st.button("🚀 Run Multi-Agent Analysis", use_container_width=True):
-    with st.spinner("Dispatching parallel agents..."):
-        quant_sig, synth_out, session_metrics = asyncio.run(
-            run_pipeline(selected_ticker, user, degrade_rag, degrade_alt)
-        )
+st.markdown("<br>", unsafe_allow_html=True)
+execute_btn = st.button("🚀 EXECUTE MULTI-AGENT REASONING PIPELINE", type="primary", use_container_width=True)
 
-    # 1. Recommendation Banner
-    st.markdown("---")
-    res_col1, res_col2 = st.columns([1, 2])
-    with res_col1:
-        st.metric(label="Target Asset", value=selected_ticker)
-        st.subheader(f"Action: :green[{synth_out['Recommendation']}]" if "BUY" in synth_out['Recommendation'] else f"Action: :orange[{synth_out['Recommendation']}]")
-    
-    with res_col2:
-        st.info(f"**Personalized Justification ({risk_profile} Risk Profile):**\n\n{synth_out['Justification']}")
+with st.expander("🛠️ System Reliability & Graceful Degradation Toggles"):
+    fail_rag = st.checkbox("Simulate Regulatory Vector Database Timeout")
+    fail_alt = st.checkbox("Simulate Alternative Data Feed Crash")
 
-    # 2. Performance Metrics
-    st.markdown("### 📊 Session Performance Metrics")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Agent Latency", session_metrics["Latency"])
-    m2.metric("30-Day Signal Accuracy", session_metrics["30D Accuracy"])
-    m3.metric("Portfolio Risk Score", session_metrics["Risk Concentration"])
+if execute_btn:
+    with st.spinner("Dispatching parallel agents (Quant, RAG, Behavioral)..."):
+        result, latency, conf = asyncio.run(run_pipeline(target_asset, user_profile, fail_rag, fail_alt))
 
-    # 3. Multi-Agent Reasoning Chains
-    st.markdown("### 🧠 Multi-Agent Reasoning Trace")
-    
-    t1, t2, t3 = st.tabs(["📊 Quant Signal Agent", "📄 Fundamental RAG Agent", "🌐 Alternative/News Agent"])
-    
-    with t1:
-        st.write(f"**Classification:** {quant_sig.classification} (Confidence: {quant_sig.confidence})")
-        st.write(f"**Reasoning:** {quant_sig.reasoning}")
-        st.json(quant_sig.dimensions_evaluated)
+    # Telemetry Metrics Row
+    st.markdown("### 📊 Session Performance & Risk Telemetry")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Pipeline Latency", latency)
+    m2.metric("Model Confidence", conf)
+    m3.metric("Cash Buffer", f"{user_profile.cash_buffer_pct}%")
+    m4.metric("Active Agents", "3 Parallel")
+
+    # Core Verdict Card (Line by Line)
+    st.markdown("### 🎯 Personalized Investment Intelligence")
+    with st.container(border=True):
+        st.markdown(f"**Synthesized Advisory for `{target_asset}`**")
+        st.markdown(f"## {result['Action']}")
+        st.markdown(f"""
+        {result['Line1']}<br>
+        {result['Line2']}<br>
+        {result['Line3']}
+        """, unsafe_allow_html=True)
+
+    # Verified Source Citations & Live Clickable News Hub
+    st.markdown("### 📑 Verified Source Citations & Live Brand News Center")
+    with st.container(border=True):
+        st.markdown("**Official Regulatory Citation & Document Source:**")
+        st.markdown(f"📄 [{result['Citation']}]({result['Link']})")
         
-    with t2:
-        st.write(f"**Retrieved Insight:** {synth_out['Fundamental_Base']}")
-        st.caption(f"**Source Citation:** `{synth_out['Source']}`")
-        if degrade_rag:
-            st.warning("Executed in degraded mode (Vector search fallback activated).")
-            
-    with t3:
-        st.write(f"**Status/Insight:** {synth_out['Alternative_Base']}")
-        if degrade_alt:
-            st.error("Feed failure detected. Synthesis gracefully handled missing feed.")
+        st.markdown("**Extracted Contextual RAG Insight:**")
+        st.info(f'"{result["RAG_Text"]}"')
+        
+        st.markdown(f"**Live Clickable News & Financial Feeds for `{target_asset}`:**")
+        
+        col_n1, col_n2, col_n3 = st.columns(3)
+        with col_n1:
+            st.link_button("📈 Google Finance Hub", f"https://www.google.com/finance/quote/{target_asset}:NSE", use_container_width=True)
+        with col_n2:
+            st.link_button("📰 Yahoo News & Filings", f"https://finance.yahoo.com/quote/{target_asset}.NS/news", use_container_width=True)
+        with col_n3:
+            st.link_button("📊 Screener Fundamentals", f"https://www.screener.in/company/{target_asset}/consolidated/", use_container_width=True)
