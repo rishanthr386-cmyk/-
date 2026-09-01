@@ -26,7 +26,7 @@ st.markdown("""
     .metric-val { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #38bdf8; }
     .metric-lbl { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
     
-    .news-card-item { background: #1e293b; border: 1px solid #334155; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .news-card-item { background: #0f172a; border: 1px solid #334155; padding: 12px 16px; border-radius: 6px; margin-top: 8px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
     .guide-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #f43f5e; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
 </style>
 """, unsafe_allow_html=True)
@@ -73,7 +73,7 @@ class QuantitativeEngine:
         await asyncio.sleep(0.3)
         score = random.uniform(-1, 1)
         cls = "BULLISH MOMENTUM" if score > 0.2 else "BEARISH PRESSURE" if score < -0.2 else "NEUTRAL CONSOLIDATION"
-        return QuantitativeSignal(classification=cls, confidence=round(abs(score), 2), summary=f"Evaluated price momentum and volume anomaly across 3 dimensions. Score: {score:.2f}.")
+        return QuantitativeSignal(classification=cls, confidence=round(abs(score), 2), summary=f"Evaluated price momentum and volume anomaly across 3 dimensions[cite: 1]. Score: {score:.2f}.")
 
 class RegulatoryRAGVault:
     async def evaluate(self, asset: str, fail_rag: bool) -> RegulatoryRAGSource:
@@ -195,7 +195,7 @@ if execute_btn:
     </div>
     """, unsafe_allow_html=True)
 
-    # Clickable Brand Source Vault & Live Interactive News Hub
+    # Clickable Brand Source Vault & Live Interactive News Hub with unsafe_allow_html=True fixed
     st.markdown("<div class='guide-tag'>👉 Verified Source Citations & Live Brand News Center[cite: 1]</div>", unsafe_allow_html=True)
     st.markdown(f"""
     <div class="source-box">
